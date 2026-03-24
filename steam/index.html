@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Steam authentication callback page for GameFibre account connection.">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <link rel="canonical" href="https://gamefibre.com/steam/">
+  <title>GameFibre — Steam Connection</title>
+  <link rel="stylesheet" href="../site.bundle.css">
+</head>
+<body class="page-steam">
+  <div class="site-shell">
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="logo-wrapper" href="../" aria-label="GameFibre home">
+          <gamefibre-icon class="logo" width="36" style="display:block;width:36px;height:36px" role="img" aria-label="GameFibre"></gamefibre-icon>
+          <span class="brand">GameFibre</span>
+        </a>
+
+        <nav class="topbar-nav" aria-label="Primary">
+          <a href="../">Home</a>
+          <a href="../#mini-games">Daily games</a>
+        </nav>
+
+        <a class="btn btn-small btn-ghost" href="../">Back to home</a>
+      </div>
+    </header>
+
+    <main class="container steam-main">
+      <div class="status-card" id="content">
+        <div class="checkmark">✓</div>
+        <h1>Steam connected</h1>
+        <p class="message">Redirecting back to GameFibre…</p>
+        <div class="loader"></div>
+        <div class="manual-link">
+          <p>If the app doesn’t open automatically:</p>
+          <a href="#" id="manual-link">Open GameFibre</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const claimedId = params.get('openid.claimed_id');
+
+      if (!claimedId) {
+        showError('No authentication data received', 'Please start Steam login from inside the GameFibre app.');
+        return;
+      }
+
+      const steamId = claimedId.split('/').pop();
+
+      if (!/^\d{17}$/.test(steamId)) {
+        showError('Invalid Steam ID format', `Received: ${steamId}`);
+        return;
+      }
+
+      const container = document.getElementById('content');
+      const steamIdDiv = document.createElement('div');
+      steamIdDiv.className = 'codebox';
+      steamIdDiv.textContent = `Steam ID: ${steamId}`;
+      container.insertBefore(steamIdDiv, container.querySelector('.manual-link'));
+
+      const deepLink = `gamefibre://auth?steamid=${encodeURIComponent(steamId)}`;
+      document.getElementById('manual-link').href = deepLink;
+
+      setTimeout(() => {
+        window.location.href = deepLink;
+      }, 600);
+
+      function showError(title, message) {
+        document.getElementById('content').innerHTML = `
+          <div class="error">
+            <div class="checkmark">✗</div>
+            <h1>${title}</h1>
+            <p class="message">${message}</p>
+          </div>
+        `;
+      }
+    })();
+  </script>
+  <script src="../site.bundle.js" defer></script>
+</body>
+</html>

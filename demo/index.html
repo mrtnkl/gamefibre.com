@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>GameFibre</title>
+  <link rel="icon" href="data:,">
+<script>
+    window.__GAMEFIBRE_DEBUG__ = false;
+    window.__GAMEFIBRE_PUBLIC_APP__ = true;
+    window.__GAMEFIBRE_DEMO_SNAPSHOT_MODE__ = true;
+    window.__GAMEFIBRE_PUBLIC_NAME__ = "Demo";
+    if (!window.__GAMEFIBRE_DEBUG__) {
+      document.documentElement.classList.add('gf-hide-until-css');
+
+      // Safety fallback: if the bundle fails to run, don't keep the UI hidden forever.
+      window.setTimeout(() => {
+        try {
+          const bootStyle = document.getElementById('gf-boot-style');
+          if (bootStyle) bootStyle.remove();
+          const appShell = document.getElementById('app-container');
+          if (appShell) appShell.style.visibility = 'visible';
+        } catch (_) {
+          // Ignore
+        }
+      }, 4000);
+    }
+  </script>
+
+  <!-- Prevent a brief flash of unstyled content (FOUC) on startup.
+       In production, CSS is inlined by app.bundle.js; in dev it's loaded via link.
+       JS removes this once styles are ready. -->
+  <style id="gf-boot-style">
+    html, body { background: #171a21; }
+    .gf-hide-until-css #app-container { visibility: hidden; }
+  </style>
+  <style>
+    body.welcome-active #main-content {
+      min-height: calc(100dvh - var(--gf-safe-top) - var(--gf-safe-bottom));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.welcome-active .welcome-screen {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.welcome-active .welcome-inner {
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+  <!-- Enrichment progress bar (fixed at top) -->
+  <div id="enrichment-progress" class="enrichment-progress hidden">
+    <div id="enrichment-progress-bar" class="enrichment-progress-bar"></div>
+  </div>
+  
+  <!-- Search Bar -->
+  <div id="search-bar" class="search-bar">
+    <button id="menu-toggle" class="menu-toggle">
+      <i id="menu-friend-active-dot" class="menu-toggle-friend-active-dot" hidden aria-hidden="true"></i>
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="search-input-wrapper">
+      <input type="text" id="search-input" class="search-input" placeholder="Search">
+      <span id="game-count" class="game-count"></span>
+      <button id="search-action-btn" class="search-action-btn">
+        <svg id="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg id="clear-icon" class="hidden" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <button id="search-tag-filter-btn" class="search-fullscreen-btn" aria-label="Filter by tags" title="Filter by tags">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M4 3V17M10 3V17M16 3V17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="2.6" y="6" width="2.8" height="4" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="8.6" y="10" width="2.8" height="4" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="14.6" y="5" width="2.8" height="4" rx="1" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+    </button>
+    <button id="search-fullscreen-btn" class="search-fullscreen-btn search-immersive-btn" aria-label="Enter fullscreen" title="Enter fullscreen" aria-pressed="false">
+      <svg id="fullscreen-enter-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M3 8V3H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 3H17V8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M17 12V17H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 17H3V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg id="fullscreen-exit-icon" class="hidden" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M8 3V8H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 3V8H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M17 12H12V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 12H8V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div id="enrich-progress-steam" class="enrich-progress-bar enrich-progress-steam"></div>
+    <div id="enrich-progress-gog" class="enrich-progress-bar enrich-progress-gog"></div>
+    <div id="enrich-progress-epic" class="enrich-progress-bar enrich-progress-epic"></div>
+  </div>
+
+  <div id="menu-glasspane"></div>
+
+  <!-- List bar (below search bar) -->
+  <div id="list-bar"></div>
+
+  <!-- Scroll container: only this element scrolls. #app-container itself does not
+       scroll, which allows position:fixed children (overlays, modals) to stay
+       pinned to the safe-area bounds and not scroll away with content. -->
+  <div id="app-scroll">
+  <div id="app">
+
+    <!-- Side Menu -->
+    <nav id="side-menu" class="side-menu">
+      <div class="menu-header">
+        <button id="menu-close-btn" class="menu-close-btn" type="button" aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="menu-content">
+        <div id="menu-network-status" class="menu-network-status hidden">Offline</div>
+
+        <div class="menu-section" data-section="platforms">
+          <button type="button" class="menu-section-header" aria-expanded="true">
+            <span class="menu-section-title">Accounts</span>
+            <svg class="menu-section-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="menu-section-body">
+            <!-- Compact Platform Status List -->
+            <div class="platform-list">
+              <div class="platform-item">
+                <span class="platform-name"><img src="assets/steam.svg" alt="" class="platform-icon">Steam</span>
+                <span class="platform-status" id="menu-steam-status">Not connected</span>
+              </div>
+              <div class="platform-item">
+                <span class="platform-name"><img src="assets/gog.svg" alt="" class="platform-icon">GOG</span>
+                <span class="platform-status" id="menu-gog-status">Not connected</span>
+              </div>
+              <div class="platform-item">
+                <span class="platform-name"><img src="assets/epic.png" alt="" class="platform-icon">Epic</span>
+                <span class="platform-status" id="menu-epic-status">Not connected</span>
+              </div>
+              <div class="platform-item">
+                <span class="platform-name"><img src="assets/steamgriddb.png" alt="" class="platform-icon">SteamGridDB</span>
+                <span class="platform-status" id="menu-steamgriddb-status">Not connected</span>
+              </div>
+              <div class="platform-item platform-item-default-launcher">
+                <span class="platform-name">Default Launcher</span>
+                <span class="platform-status status not-connected" id="menu-default-launcher-status">None</span>
+              </div>
+              <button id="manage-accounts-btn" class="btn-primary btn-small" style="width: 100%; margin-top: 12px;">Manage</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-section" data-section="sort">
+          <button type="button" class="menu-section-header" aria-expanded="true">
+            <span class="menu-section-title">Sort by</span>
+            <svg class="menu-section-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="menu-section-body">
+            <div class="sort-options" id="sort-options">
+            <button class="sort-option" data-sort="alphabetical">
+              <span>Name (A-Z)</span>
+              <svg class="sort-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 14V2m-3 3l3-3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="sort-option" data-sort="recent">
+              <span>Recent</span>
+              <svg class="sort-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2v12m3-3l-3 3-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="sort-option" data-sort="playtime">
+              <span>Time Played</span>
+              <svg class="sort-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2v12m3-3l-3 3-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="sort-option" data-sort="size">
+              <span>Install Size</span>
+              <svg class="sort-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2v12m3-3l-3 3-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="sort-option" data-sort="hltb">
+              <span>How Long To Beat</span>
+              <svg class="sort-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2v12m3-3l-3 3-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="sort-option" data-sort="release">
+              <span>Release Date</span>
+              <svg class="sort-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2v12m3-3l-3 3-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="sort-option" data-sort="metacritic">
+              <span>Metascore</span>
+              <svg class="sort-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2v12m3-3l-3 3-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="sort-option" data-sort="random">
+              <span>Random</span>
+              <svg class="sort-refresh" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M21 2v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 12a9 9 0 0 1 15.5-6.36L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 22v-6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 12a9 9 0 0 1-15.5 6.36L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-section" data-section="display">
+          <button type="button" class="menu-section-header" aria-expanded="true">
+            <span class="menu-section-title">Display options</span>
+            <svg class="menu-section-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="menu-section-body">
+            <div class="display-options">
+            <div class="display-subsection">
+              <div class="display-subtitle">Tile View</div>
+              <div class="size-picker" id="size-picker">
+                <label class="size-option">
+                  <input type="radio" name="tile-size" value="LIST">
+                  <span>LIST</span>
+                </label>
+                <label class="size-option">
+                  <input type="radio" name="tile-size" value="XS">
+                  <span>XS</span>
+                </label>
+                <label class="size-option">
+                  <input type="radio" name="tile-size" value="S">
+                  <span>S</span>
+                </label>
+                <label class="size-option">
+                  <input type="radio" name="tile-size" value="M" checked>
+                  <span>M</span>
+                </label>
+                <label class="size-option">
+                  <input type="radio" name="tile-size" value="L">
+                  <span>L</span>
+                </label>
+                <label class="size-option">
+                  <input type="radio" name="tile-size" value="XL">
+                  <span>XL</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="display-subsection">
+              <div class="display-subtitle">Fit Image</div>
+              <div class="size-picker" id="image-fit-picker">
+                <label class="size-option">
+                  <input type="radio" name="image-fit" value="cover">
+                  <span>Cover</span>
+                </label>
+                <label class="size-option">
+                  <input type="radio" name="image-fit" value="contain">
+                  <span>Shrink</span>
+                </label>
+                <label class="size-option">
+                  <input type="radio" name="image-fit" value="smart" checked>
+                  <span>Smart</span>
+                </label>
+              </div>
+            </div>
+
+            <label>
+              <input type="checkbox" id="immersive-mode">
+              <span>Immersive mode</span>
+            </label>
+            <label>
+              <input type="checkbox" id="ignore-articles">
+              <span>Ignore The / A</span>
+            </label>
+            <label>
+              <input type="checkbox" id="hide-duplicates">
+              <span>Merge Duplicates</span>
+            </label>
+            <label>
+              <input type="checkbox" id="show-game-info">
+              <span>Show Game Info</span>
+            </label>
+            <label>
+              <input type="checkbox" id="show-only-duplicates">
+              <span>Show Only Duplicates</span>
+            </label>
+            <label>
+              <input type="checkbox" id="use-rounded-corners" checked>
+                <span>Rounded corners</span>
+            </label>
+            <label style="display:none">
+              <input type="checkbox" id="animate-tiles">
+              <span>Animate into view</span>
+            </label>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-section" data-section="lists">
+          <button type="button" class="menu-section-header" aria-expanded="true">
+            <span class="menu-section-title">Lists</span>
+            <svg class="menu-section-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="menu-section-body">
+            <ul id="menu-lists-body" class="menu-lists-body"></ul>
+          </div>
+        </div>
+
+        <div class="menu-section" data-section="extras">
+          <button type="button" class="menu-section-header" aria-expanded="true">
+            <span class="menu-section-title">Your data</span>
+            <svg class="menu-section-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="menu-section-body">
+            <div class="extras-options">
+              <p class="menu-lists-hint" style="padding:0 0 2px;">Account information is never exported.</p>
+              <button id="export-json-btn" class="btn-primary btn-small">Export my data</button>
+              <p class="menu-lists-hint" style="padding:0 0 2px;">Use import to load lists and preferences.</p>
+              <button id="import-state-btn" class="btn-primary btn-small">Import my data</button>
+              <button id="export-spreadsheet-btn" class="btn-primary btn-small">Create Spreadsheet</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-section" data-section="friends">
+          <button type="button" class="menu-section-header" aria-expanded="true">
+            <span class="menu-section-title">Friend Games <span id="friends-section-active-label" class="menu-section-title-active-suffix" hidden>active</span></span>
+            <svg class="menu-section-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="menu-section-body">
+            <div class="extras-options" style="margin-bottom:14px;">
+              <p class="menu-lists-hint" style="padding:0 0 2px;">Browse a friend’s collection without changing your library.</p>
+              <button id="friend-load-snapshot-btn" class="btn-primary btn-small">Load Friend Games</button>
+            </div>
+            <div id="friends-empty-example-wrap" style="margin-bottom:14px;" hidden>
+              <p class="menu-lists-hint" style="padding:0 0 2px;">No Friend Games loaded yet. You can download the <a id="friends-dev-example-download-link" href="https://gamefibre.com/GameFibre-developer.json" target="_blank" rel="noopener noreferrer" download="GameFibre-developer.json" style="color:inherit;">developer’s game library</a> as an example.</p>
+            </div>
+            <p id="friends-status-hint" class="menu-lists-hint" style="padding:0 0 4px;" hidden>Click a friend to view their games.</p>
+            <ul id="menu-friends-body" class="menu-lists-body"></ul>
+          </div>
+        </div>
+
+        <div class="menu-section collapsed" data-section="about">
+          <button id="menu-about-btn" type="button" class="menu-section-header" aria-expanded="false">
+            <span class="menu-section-title">About</span>
+            <svg class="menu-section-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+<!-- Metacritic Status -->
+        <div id="metacritic-status" class="metacritic-status hidden">
+          <span class="status-label">Fetching Metacritic:</span>
+          <span id="metacritic-counter" class="status-counter">0/0</span>
+        </div>
+
+        <div id="menu-version-footer" class="menu-version-footer">v0.0.0 · native n0-unknown</div>
+      </div>
+    </nav>
+
+    <!-- Game Platforms Sheet -->
+    <div id="login-modal" class="platforms-sheet hidden">
+      <div class="platforms-sheet-backdrop"></div>
+      <div class="platforms-sheet-panel">
+        <div class="platforms-sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-content-wrap">
+          <div class="platforms-sheet-header">
+            <h2 class="platforms-sheet-title">Accounts</h2>
+            <button id="modal-close-btn" class="platforms-sheet-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18 6L6 18" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="platforms-sheet-body">
+            <section class="platforms-sheet-section">
+              <!-- <div class="platforms-section-header">
+                <h3 class="platforms-section-title">Game platforms</h3>
+                <p class="platforms-section-subtitle">Connect your libraries and refresh metadata.</p>
+              </div> -->
+              <div class="platforms-sheet-cards platforms-sheet-cards--platforms">
+                <!-- Steam Section -->
+                <div id="steam-platform-auth" class="platform-auth not-connected">
+                  <div class="platform-header">
+                    <span class="platform-name"><img src="assets/steam.svg" alt="" class="platform-icon">Steam</span>
+                    <span id="steam-status-indicator" class="status-indicator">Not connected</span>
+                  </div>
+                  <p id="steam-hint" class="platform-hint public">Your <a href="https://steamcommunity.com/my/edit/settings" target="_blank">Steam profile</a> must be public.</p>
+                  <div class="platform-actions">
+                    <button type="button" id="steam-connect-btn" class="btn-primary">Connect</button>
+                    <button type="button" id="steam-disconnect-btn" class="btn-primary hidden">Disconnect</button>
+                    <button type="button" id="steam-refresh-btn" class="btn-primary hidden">Refresh</button>
+                  </div>
+                </div>
+
+                <!-- GOG Section -->
+                <div id="gog-platform-auth" class="platform-auth not-connected">
+                  <div class="platform-header">
+                    <span class="platform-name"><img src="assets/gog.svg" alt="" class="platform-icon">GOG</span>
+                    <span id="gog-status-indicator" class="status-indicator">Not connected</span>
+                  </div>
+                  <div class="platform-actions">
+                    <button type="button" id="gog-connect-btn" class="btn-primary">Connect</button>
+                    <button type="button" id="gog-disconnect-btn" class="btn-primary hidden">Disconnect</button>
+                    <button type="button" id="gog-refresh-btn" class="btn-primary hidden">Refresh</button>
+                  </div>
+                </div>
+
+                <!-- Epic Section -->
+                <div id="epic-platform-auth" class="platform-auth not-connected">
+                  <div class="platform-header">
+                    <span class="platform-name"><img src="assets/epic.png" alt="" class="platform-icon">Epic</span>
+                    <span id="epic-status-indicator" class="status-indicator">Not connected</span>
+                  </div>
+                  <p id="epic-hint" class="platform-hint">Check the "Remember me" box during sign-in</p>
+                  <div class="platform-actions">
+                    <button type="button" id="epic-connect-btn" class="btn-primary">Connect</button>
+                    <button type="button" id="epic-disconnect-btn" class="btn-primary hidden">Disconnect</button>
+                    <button type="button" id="epic-refresh-btn" class="btn-primary hidden">Refresh</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="platforms-sheet-section">
+              <!-- <div class="platforms-section-header">
+                <h3 class="platforms-section-title">Artwork provider</h3>
+                <p class="platforms-section-subtitle">Used for custom box art search and replacement.</p>
+              </div> -->
+              <div class="platforms-sheet-cards">
+                <!-- SteamGridDB Section -->
+                <div id="steamgriddb-platform-auth" class="platform-auth not-connected">
+                  <div class="platform-header">
+                    <span class="platform-name"><img src="assets/steamgriddb.png" alt="" class="platform-icon">SteamGridDB</span>
+                    <span id="steamgriddb-status-indicator" class="status-indicator">Not connected</span>
+                  </div>
+                  <p class="platform-hint persistent">Get your API key from <a href="https://www.steamgriddb.com/profile/preferences/api" target="_blank" rel="noopener noreferrer">SteamGridDB API Preferences</a>.</p>
+                  <div class="platform-input-row">
+                    <input id="steamgriddb-api-key-input" class="platform-api-input" type="text" placeholder="Paste SteamGridDB API key" autocomplete="off" spellcheck="false">
+                  </div>
+                  <div class="platform-actions">
+                    <button type="button" id="steamgriddb-connect-btn" class="btn-primary">Connect</button>
+                    <button type="button" id="steamgriddb-disconnect-btn" class="btn-primary hidden">Disconnect</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="platforms-sheet-section">
+              <!-- <div class="platforms-section-header">
+                <h3 class="platforms-section-title">Launcher</h3>
+                <p class="platforms-section-subtitle">Used by Install in Game Viewer for Steam games.</p>
+              </div> -->
+              <div class="platforms-sheet-cards">
+                <div id="default-launcher-platform-auth" class="platform-auth not-connected">
+                  <div class="platform-header">
+                    <span class="platform-name">Default Game Launcher</span>
+                    <span id="default-launcher-status-indicator" class="status-indicator">None</span>
+                  </div>
+                  <p class="platforms-section-subtitle">Games marked as Installed use this client to launch.</p>
+                  <select id="default-launcher-select" class="platforms-default-launcher-select" aria-label="Default launcher">
+                    <option value="none">None</option>
+                    <option value="gamenative">GameNative</option>
+                    <option value="gamehublite_standard">GameHub Lite (Standard)</option>
+                    <option value="gamehublite_antutu">GameHub Lite (Antutu)</option>
+                    <option value="gamehublite_pubg">GameHub Lite (PUBG)</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- About Sheet -->
+    <div id="about-modal" class="about-sheet hidden">
+      <div class="about-sheet-backdrop"></div>
+      <div class="about-sheet-panel">
+        <div class="modal-drag-handle" aria-hidden="true"></div>
+        <div class="sheet-content-wrap">
+          <div class="about-sheet-header">
+            <h2 class="about-sheet-title">About</h2>
+            <button class="about-sheet-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18 6L6 18" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="about-sheet-body">
+          <gamefibre-icon
+            class="about-sheet-logo"
+            width="132"
+            role="img"
+            aria-label="GameFibre logo"></gamefibre-icon>
+          <p class="about-sheet-eyebrow">Unified game library for Android</p>
+          <h1 class="about-sheet-name">GameFibre &ndash; Rediscover your games</h1>
+          <p class="about-sheet-description">
+            We hoard games, stare at our libraries and can&rsquo;t decide what to play. GameFibre brings your Steam, GOG, and Epic libraries together in a beautifully designed space built for exploration and discovery &ndash; making choosing your next game fun again 😊.
+          </p>
+
+          <h2 class="about-sheet-h2">A joyful way to explore your backlog</h2>
+          <p class="about-sheet-description">
+            Turn your library into a playground. Shuffle lists randomly, quiz yourself on release dates and critical reception, or solve a slide puzzle of customized box art. Discovering your next game is full of surprises.
+          </p>
+
+          <p class="about-sheet-eyebrow">Made with ❤️</p>
+          <h2 class="about-sheet-h2">Everything you need. Nothing you don&rsquo;t.</h2>
+
+          <h3 class="about-sheet-h3">One library</h3>
+          <p class="about-sheet-description">
+            Bring Steam, GOG, and Epic together into one unified and visually rich space.
+          </p>
+
+          <h3 class="about-sheet-h3">Customize</h3>
+          <p class="about-sheet-description">
+            Apply artwork from SteamGridDB, set favorites and create your own lists. Make your library truly yours.
+          </p>
+
+          <h3 class="about-sheet-h3">Discover</h3>
+          <p class="about-sheet-description">
+            Browse by review scores, HowLongToBeat playtime estimates or installation size. Shuffle your library for surprise picks.
+          </p>
+
+          <h3 class="about-sheet-h3">Friends Games</h3>
+          <p class="about-sheet-description">
+            Discover games from friends and save the ones you love to your wishlist.
+          </p>
+
+          <h3 class="about-sheet-h3">Offline</h3>
+          <p class="about-sheet-description">
+            Your collection, lists and box art visuals stay offline, always accessible even without a network or if services expire.
+          </p>
+
+          <h3 class="about-sheet-h3">Instant Play</h3>
+          <p class="about-sheet-description">
+            Launch games directly from within GameFibre, using external clients like GameNative or GameHub Lite.
+          </p>
+
+          <h3 class="about-sheet-h3">Privacy first</h3>
+          <p class="about-sheet-description">
+            No tracking. No profiling. No ads. No catch. Your data is kept on your device only, available to export at your convenience.
+          </p>
+
+          <p class="about-sheet-eyebrow">Turn your library into a playground</p>
+          <h2 class="about-sheet-h2">GameFibre Mini Games</h2>
+          <p class="about-sheet-description">
+            Quiz yourself about the games you own. Chrono challenges you to arrange them by release year, Critic dares you to sort by metascore, and Cover Slide turns your favorite box art into a classic sliding puzzle.
+          </p>
+
+          <p class="about-sheet-meta">© 2026 GameFibre</p>
+          <p class="about-sheet-meta">
+            Steam, GOG, Epic Games, SteamGridDB, HowLongToBeat, GameNative, and GameHub Lite are trademarks of their respective owners.
+          </p>
+          <p class="about-sheet-meta">GameFibre is proud to use privacy-first Simple Analytics. Go Dutchies!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content">
+
+      <!-- ==================================================================
+           Welcome / No Platforms Connected
+           Edit this section freely (text, layout, logo).
+           JS toggles visibility by adding/removing the `hidden` class.
+           ================================================================== -->
+      <section id="welcome-screen" class="welcome-screen hidden" aria-label="Welcome">
+        <div class="welcome-inner">
+          <gamefibre-icon
+            class="welcome-logo"            
+            role="img"
+            aria-label="GameFibre"></gamefibre-icon>
+          <p class="welcome-text">
+            Welcome to GameFibre — your clean, offline-first library for Steam, GOG, and Epic.
+          </p>
+          <button id="welcome-connect-btn" class="btn-primary welcome-connect-btn" type="button">
+            Connect Game Platforms
+          </button>
+        </div>
+      </section>
+
+      <!-- Loading State -->
+      <div id="loading" class="loading hidden">
+        <p>Loading games...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="error" class="error hidden">
+        <p id="error-message"></p>
+      </div>
+
+      <!-- Game Grid -->
+      <div id="game-grid" class="game-grid"></div>
+    </main>
+  </div>
+  </div><!-- /#app-scroll -->
+
+  </div><!-- /#app-container -->
+
+  <script type="module" src="app.bundle.js"></script>
+  <script async data-hostname="app.gamefibre.com" src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+</body>
+</html>
