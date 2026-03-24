@@ -1,0 +1,10 @@
+{
+  "version": "1.0.538",
+  "nativeApi": 1,
+  "nativeFingerprint": "26ed4b0608bed0baede7419466d794e99572c53df8289fc986c89d3c985e9d6a",
+  "bundleUrl": "/update/app.bundle.js",
+  "title": "What's new?",
+  "features": [
+    "Performance and stability improvements"
+  ]
+}
