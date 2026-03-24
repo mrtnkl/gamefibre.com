@@ -1,7 +1,7 @@
 {
-  "version": "1.0.539",
+  "version": "1.0.540",
   "nativeApi": 1,
-  "nativeFingerprint": "26ed4b0608bed0baede7419466d794e99572c53df8289fc986c89d3c985e9d6a",
+  "nativeFingerprint": "cb81760389f0885bac0c12d6932c7eb05027072ba9cca8cb75b16d4eb83e6702",
   "bundleUrl": "/update/app.bundle.js",
   "title": "What's new?",
   "features": [
